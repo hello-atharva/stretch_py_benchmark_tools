@@ -1,31 +1,50 @@
 //require our websocket library 
 var WebSocketServer = require('ws').Server;
-// const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
- 
+const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 
+// Set up ZMQ server at port 3000
+const zmq = require('zeromq');
+const sock = new zmq.Push;
+
+async function connectZMQ() {
+    await sock.bind("tcp://localhost:3000");
+}
+
+connectZMQ();
+
+// Utility function to publish a message over ZMQ
+async function sendZMQ(topic, message) {
+    await sock.send([topic, message]);
+    await new Promise(resolve => { setTimeout(resolve, 500) });
+}
+
+// Set up Express.js server for the web teleop UI
 var express = require('express');
 var app = express();
 var path = require('path');
 var fs = require('fs');
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname + '/static')));
 
+// Serve our teleop webpage at the root
 app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'));
+    res.sendFile(path.join(__dirname + '/static/index.html'));
 }
 );
 
 app.listen(8080, function () {
-    console.log('Example app listening on port 8080!');
+    console.log('Open Web Teleop App at localhost:8080!');
 });
 
 //creating a websocket server at port 9090 
 var wss = new WebSocketServer({port: 9090});
+var robotConnection;
   
 //when a user connects to our sever 
 wss.on('connection', function(connection) {
   
    console.log("User connected");
+   robotConnection = connection;
 	 
    //when server gets a message from a connected user 
    connection.on('message', function(message) {
@@ -37,20 +56,21 @@ wss.on('connection', function(connection) {
       } catch (e) { 
          console.log("Invalid JSON"); 
          data = {}; 
+         return;
       }
 		  
       //switching type of the user message 
       switch (data.type) { 		
          case "offer": 
-            handleOffer(data.offer);
+            handleOffer(connection, data.offer);
             break;
 				
          case "answer": 
-            handleAnswer(data.answer);
+            handleAnswer(connection, data.answer);
             break;
 				
          case "candidate": 
-            handleCandidate(data.candidate);
+            handleCandidate(connection, data.candidate);
             break;
 
          default: 
@@ -83,7 +103,7 @@ var conn = new RTCPeerConnection({
 
 conn.onicecandidate = function (event) {
     if (event.candidate) {
-        sendTo(conn, {
+        send({
             type: "candidate",
             candidate: event.candidate
         });
@@ -93,38 +113,44 @@ conn.onicecandidate = function (event) {
 dataChannel = conn.createDataChannel("web_teleop_channel", {reliable: true});
 
 dataChannel.onopen = function () {
-    console.log("data channel is open and ready to be used.");
+    console.log("[RTC] data channel is open and ready to be used.");
 }
 
 dataChannel.onerror = function (error) {
-    console.log("Error:", error);
+    console.log("[RTC] Error:", error);
 };
 
 dataChannel.onmessage = function (event) {
-    console.log("Got message:", event.data);
+    console.log("[RTC] Got message:", event.data);
+    console.log("Sending to ZMQ...")
+    sendZMQ('stretch_teleop_commands', event.data);
 };
 
 dataChannel.onclose = function () {
-    console.log("data channel is closed");
+    console.log("[RTC] data channel is closed");
 };
 
 conn.ondatachannel = function (event) {
+    // We need to store remote client's RTC datachannel to be able to receive data
     remoteDataChannel = event.channel;
     remoteDataChannel.onmessage = function (event) {
-        console.log("Got message:", event.data);
+        console.log("[RTC] Got message from operator:", event.data);
+        // Send teleop command over ZMQ
+        console.log("Sending to ZMQ...")
+        sendZMQ('stretch_teleop_commands', event.data);
     };
 }
 
 function send(message) {
     message.name = "server_client";
-    wss.send(JSON.stringify(message));
+    robotConnection.send(JSON.stringify(message));
 }
 
-function handleOffer(offer) {
+function handleOffer(ws_connection, offer) {
     conn.setRemoteDescription(new RTCSessionDescription(offer));
     conn.createAnswer(function (answer) {
         conn.setLocalDescription(answer);
-        send({
+        sendTo(ws_connection, {
             type: "answer",
             answer: answer
         });
@@ -133,10 +159,10 @@ function handleOffer(offer) {
     });
 }
 
-function handleCandidate(candidate) {
+function handleCandidate(ws_connection, candidate) {
     conn.addIceCandidate(new RTCIceCandidate(candidate));
 }
 
-function handleAnswer(answer) {
+function handleAnswer(ws_connection, answer) {
     conn.setRemoteDescription(new RTCSessionDescription(answer));
 }
