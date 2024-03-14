@@ -1,7 +1,7 @@
 var name = "remote_client";
-var connectedUser = "server_client";
+var connectedUser;
 
-var conn = new WebSocket('ws://localhost:8080'); 
+var conn = new WebSocket('ws://localhost:9090'); 
 
 conn.onopen = function () { 
    console.log("Connected to the signaling server");
@@ -26,7 +26,7 @@ conn.onmessage = function (msg) {
          break; 
       case "leave": 
          handleLeave(); 
-         break; 
+         break;
       default: 
          break; 
    } 
@@ -37,22 +37,17 @@ conn.onerror = function (err) {
 }; 
 
 function send(message) { 
-
-   if (connectedUser) { 
-      message.name = connectedUser; 
-   } 
-	
-   conn.send(JSON.stringify(message)); 
-};
+    //attach the other peer username to our messages
+    if (connectedUser) { 
+       message.name = connectedUser; 
+    } 
+     
+    conn.send(JSON.stringify(message)); 
+ };
 
 var yourConn; 
 var dataChannel;
 var remoteDataChannel;
-
-send({
-    type: "login",
-    name: "remote_client"
-});
  
 function handleLogin(success) { 
 
@@ -93,6 +88,20 @@ function handleLogin(success) {
         console.log("data channel is closed"); 
     };
 
+    // // initiating an offer to server_client
+    // // connectedUser = "server_client";
+
+    yourConn.createOffer(function (offer) {
+        send({
+            type: "offer",
+            offer: offer
+        });
+        yourConn.setLocalDescription(offer);
+        }, function (error) {
+            alert("Error when creating an offer");
+        }
+    );
+
     yourConn.ondatachannel = function(event) {
         remoteDataChannel = event.channel;
         remoteDataChannel.onmessage = function(event) {
@@ -101,20 +110,7 @@ function handleLogin(success) {
     }		
    } 
 };
- 
-// initiating an offer to server_client
-connectedUser = "server_client";
-yourConn.createOffer(function (offer) {
-    send({
-        type: "offer",
-        offer: offer
-    });
-    yourConn.setLocalDescription(offer);
-    }, function (error) {
-        alert("Error when creating an offer");
-    }
-);
- 
+
 function handleOffer(offer, name) { 
    console.log("Got an offer from " + name);
    connectedUser = name; 
@@ -140,3 +136,64 @@ function handleAnswer(answer) {
 function handleCandidate(candidate) { 
    yourConn.addIceCandidate(new RTCIceCandidate(candidate)); 
 };
+
+// Button DOM elements
+var forwardButton = document.getElementById("forwardBtn");
+var moveByButton = document.getElementById("moveByBtn");
+var moveToButton = document.getElementById("moveToBtn");
+var homeButton = document.getElementById("homeBtn");
+var runstopButton = document.getElementById("runstopBtn");
+var connectButton = document.getElementById("connectBtn");
+
+// Click event listeners
+forwardButton.addEventListener("click", function() {
+    if (remoteDataChannel) {
+        const data = {
+            type: "forward",
+            value: 1
+        };
+        remoteDataChannel.send(JSON.stringify(data));
+    }
+});
+
+moveByButton.addEventListener("click", function() {
+    if (remoteDataChannel) {
+        const data = {
+            type: "moveBy",
+            value: 0.5
+        };
+        remoteDataChannel.send(JSON.stringify(data));
+    }
+});
+
+moveToButton.addEventListener("click", function() {
+    if (remoteDataChannel) {
+        const data = {
+            type: "moveTo",
+            value: 0.5
+        };
+        remoteDataChannel.send(JSON.stringify(data));
+    }
+});
+
+homeButton.addEventListener("click", function() {
+    if (remoteDataChannel) {
+        const data = {
+            type: "home"
+        };
+        remoteDataChannel.send(JSON.stringify(data));
+    }
+});
+
+runstopButton.addEventListener("click", function() {
+    if (remoteDataChannel) {
+        const data = {
+            type: "runstop"
+        };
+        remoteDataChannel.send(JSON.stringify(data));
+    }
+});
+
+connectButton.addEventListener("click", function() {
+    handleLogin(true);
+});

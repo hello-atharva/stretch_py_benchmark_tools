@@ -1,10 +1,16 @@
 var name = "server_client";
-var connectedUser = "remote_client";
+var connectedUser;
 
-var conn = new WebSocket('ws://localhost:8080'); 
+var conn = new WebSocket('ws://localhost:9090'); 
 
 conn.onopen = function () { 
    console.log("Connected to the signaling server");
+
+   console.log("Logging in as " + name);
+   send({ 
+      type: "login", 
+      name: name 
+   }); 
 };
  
 conn.onmessage = function (msg) { 
@@ -27,6 +33,10 @@ conn.onmessage = function (msg) {
       case "leave": 
          handleLeave(); 
          break; 
+      case "notification":
+            console.log("User " + data.message + " has joined the session.");
+            handleNotification(data.message);
+            break;
       default: 
          break; 
    } 
@@ -37,22 +47,17 @@ conn.onerror = function (err) {
 }; 
 
 function send(message) { 
-
-   if (connectedUser) { 
-      message.name = connectedUser; 
-   } 
-	
-   conn.send(JSON.stringify(message)); 
-};
+    //attach the other peer username to our messages
+    if (connectedUser) { 
+       message.name = connectedUser; 
+    } 
+     
+    conn.send(JSON.stringify(message)); 
+ };
 
 var yourConn; 
 var dataChannel;
 var remoteDataChannel;
-
-send({
-    type: "login",
-    name: "remote_client"
-});
  
 function handleLogin(success) { 
 
@@ -93,6 +98,9 @@ function handleLogin(success) {
         console.log("data channel is closed"); 
     };
 
+    // // initiating an offer to server_client
+    // // connectedUser = "server_client";
+
     yourConn.ondatachannel = function(event) {
         remoteDataChannel = event.channel;
         remoteDataChannel.onmessage = function(event) {
@@ -102,19 +110,23 @@ function handleLogin(success) {
    } 
 };
  
-// initiating an offer to server_client
-connectedUser = "server_client";
-yourConn.createOffer(function (offer) {
-    send({
-        type: "offer",
-        offer: offer
-    });
-    yourConn.setLocalDescription(offer);
-    }, function (error) {
-        alert("Error when creating an offer");
-    }
-);
- 
+function handleNotification(message) {
+// Send an offer to a user
+  if (yourConn) {
+    yourConn.createOffer(function (offer) {
+        send({
+            type: "offer",
+            offer: offer,
+            name: message
+        });
+        yourConn.setLocalDescription(offer);
+        }, function (error) {
+            alert("Error when creating an offer");
+        }
+    );
+  }
+}
+
 function handleOffer(offer, name) { 
    console.log("Got an offer from " + name);
    connectedUser = name; 

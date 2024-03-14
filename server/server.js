@@ -44,6 +44,19 @@ wss.on('connection', function(connection) {
                   type: "login", 
                   success: true 
                }); 
+
+               // notify all other users that a new user has joined
+               for (var user in users) {
+                  if (users.hasOwnProperty(user)) {
+                     if (user !== data.name) {
+                        console.log("Sending notification to: ", user);
+                        sendTo(users[user], {
+                           type: "notification",
+                           message: data.name
+                        });
+                     }
+                  }
+               }
             }
 				
             break;
