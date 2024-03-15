@@ -6,7 +6,7 @@ import json
 # Third-party imports
 import zmq
 
-# Stretch importsS
+# Stretch imports
 import stretch_body
 
 class StretchBodyZMQCLient():
@@ -16,7 +16,7 @@ class StretchBodyZMQCLient():
         self.sock.connect(f"tcp://{hostname}:{str(port)}")
 
         # Subscribe to stretch_teleop_commands
-        self.sock.setsockopt(zmq.SUBSCRIBE, 'stretch_teleop_commands'.encode('utf-8'))
+        self.sock.setsockopt(zmq.SUBSCRIBE, ''.encode('utf-8'))
     def run(self):
         # Run indefinetly and listen to incoming messages
         try:

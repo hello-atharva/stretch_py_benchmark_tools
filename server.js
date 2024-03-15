@@ -4,10 +4,10 @@ const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('w
 
 // Set up ZMQ server at port 3000
 const zmq = require('zeromq');
-const sock = new zmq.Push;
+const sock = new zmq.Publisher();
 
 async function connectZMQ() {
-    await sock.bind("tcp://localhost:3000");
+    await sock.bind("tcp://127.0.0.1:3000");
 }
 
 connectZMQ();
@@ -133,11 +133,11 @@ dataChannel.onclose = function () {
 conn.ondatachannel = function (event) {
     // We need to store remote client's RTC datachannel to be able to receive data
     remoteDataChannel = event.channel;
-    remoteDataChannel.onmessage = function (event) {
+    remoteDataChannel.onmessage = async function (event) {
         console.log("[RTC] Got message from operator:", event.data);
         // Send teleop command over ZMQ
         console.log("Sending to ZMQ...")
-        sendZMQ('stretch_teleop_commands', event.data);
+        await sendZMQ('stretch_teleop_commands', event.data);
     };
 }
 
