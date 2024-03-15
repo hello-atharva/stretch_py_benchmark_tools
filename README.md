@@ -23,7 +23,7 @@ node server.js
 Now, open http://localhost:8080 in a web browser, preferably Google Chrome.
 
 ### Run Python Daemon
-This is still at TODO. ZMQ connection between Node server and Python daemon needs to be established.
+To pass commands to `stretch_body` through ZMQ, run
 
 ```shell
 python3 python/stretch_body_zmq_client.py
