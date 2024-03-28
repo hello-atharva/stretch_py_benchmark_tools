@@ -7,7 +7,7 @@ import json
 import zmq
 
 # Stretch imports
-import stretch_body
+import stretch_body.robot
 
 class StretchBodyZMQCLient():
     def __init__(self, hostname, port):
@@ -17,6 +17,10 @@ class StretchBodyZMQCLient():
 
         # Subscribe to stretch_teleop_commands
         self.sock.setsockopt(zmq.SUBSCRIBE, ''.encode('utf-8'))
+
+        # Stretch body
+        self.robot = stretch_body.robot.Robot()
+        self.robot.startup()
     def run(self):
         # Run indefinetly and listen to incoming messages
         try:
@@ -38,7 +42,7 @@ class StretchBodyZMQCLient():
                 elif cmd['type'] == "moveTo":
                     pass
                 elif cmd['type'] == "home":
-                    pass
+                    self.robot.home()
                 elif cmd['type'] == "runstop":
                     pass
                 else:
