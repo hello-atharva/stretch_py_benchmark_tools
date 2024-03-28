@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/webrtc": "^0.0.42",
+    "socket.io-client": "^4.7.5",
+    "typescript": "^5.4.3",
+    "wrtc": "^0.4.7",
+    "zeromq": "^6.0.0-beta.19"
+  },
+  "dependencies": {
+    "node-webrtc": "^0.0.0"
+  }
+}
