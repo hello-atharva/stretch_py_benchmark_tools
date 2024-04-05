@@ -39,5 +39,10 @@ export class Robot {
         this.socket.send("hello");
         await this.socket.receive();
     }
+
+    executeBaseVelocity = (props: {linVel: number, angVel: number}): void => {
+        console.log(props);
+        console.log(props.linVel);
+    }
 }
 

@@ -27,6 +27,12 @@ connection = new WebRTCConnection({
     onConnectionEnd: disconnectFromRobot
 })
 
+function sendPing(msg: string) {
+    if (!connection) throw 'WebRTC connection undefined!'
+
+    connection.sendData({type: "ping", message: msg});
+}
+
 robot.connect().then(() => {
     // robot.subscribeToVideo({
     //     topicName: "/navigation_camera/image_raw/rotated/compressed",
@@ -50,6 +56,7 @@ robot.connect().then(() => {
     // robot.getJointLimits()
     
     connection.joinRobotRoom()
+    setInterval(sendPing, 1000, "hello, operator");
 })
 
 function handleSessionStart() {
@@ -68,14 +75,6 @@ function handleSessionStart() {
     console.log("Opening data channels")
     connection.openDataChannels()
 }
-
-function sendPing(msg: string) {
-    if (!connection) throw 'WebRTC connection undefined!'
-
-    connection.sendData({type: "ping", message: msg});
-}
-
-// setInterval(sendPing, 1000, "hello, operator");
 
 // function forwardMoveBaseState(state: MoveBaseState) {
 //     if (!connection) throw 'WebRTC connection undefined!'
