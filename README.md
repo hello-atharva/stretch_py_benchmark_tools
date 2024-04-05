@@ -17,6 +17,8 @@ Install Node dependencies
 
 ```
 cd stretch_py_benchmark_tools/node
+npm i node-pre-gyp
+npm i -D ts-node
 npm i
 ```
 
@@ -41,7 +43,7 @@ In a new terminal, run the NodeJS server
 ```
 cd ~/teleop_ws/src/stretch_py_benchmark_tools/node
 export NODE_EXTRA_CA_CERTS="/home/hello-robot/ament_ws/src/stretch_web_teleop/certificates/rootCA.pem"
-tsc-node node_server.ts
+npx ts-node node_server.ts
 ```
 
 Open up a browser, preferably Chrome, and go to [https://localhost/operator](https://localhost/operator)
