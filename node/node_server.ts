@@ -1,24 +1,17 @@
-// import React from 'react';
-// import { createRoot } from 'react-dom/client';
-// import 'robot/css/index.css';
-// import { Robot } from '../../robot/tsx/robot'
+import { Robot } from './ts/zmq';
 import { WebRTCConnection } from './ts/webrtcconnections'
-// import { navigationProps, realsenseProps, gripperProps, WebRTCMessage, ValidJointStateDict, ValidJointStateMessage, IsRunStoppedMessage, RobotPose, ROSOccupancyGrid, OccupancyGridMessage, MapPoseMessage, GoalStatusMessage, MoveBaseState, MoveBaseStateMessage, ROSBatteryState, BatteryVoltageMessage } from './ts/util'
-import { navigationProps, realsenseProps, gripperProps, WebRTCMessage, ValidJointStateDict, ValidJointStateMessage, IsRunStoppedMessage, RobotPose, MoveBaseState, MoveBaseStateMessage, BatteryVoltageMessage } from './ts/util'
+import { navigationProps, realsenseProps, gripperProps, WebRTCMessage, ValidJointStateDict, ValidJointStateMessage, IsRunStoppedMessage, RobotPose, MoveBaseState, MoveBaseStateMessage, BatteryVoltageMessage, HasBetaTeleopKitMessage } from './ts/util'
 // import { AllVideoStreamComponent, VideoStream } from './videostreams';
-// import ROSLIB from 'roslib';
-import { HasBetaTeleopKitMessage } from './ts/util';
-import { send } from 'process';
 
-// export const robot = new Robot({ 
-//     jointStateCallback: forwardJointStates,
-//     batteryStateCallback: forwardBatteryState,
-//     occupancyGridCallback: forwardOccupancyGrid,
-//     moveBaseResultCallback: forwardMoveBaseState,
-//     amclPoseCallback: forwardAMCLPose,
-//     isRunStoppedCallback: forwardIsRunStopped,
-//     hasBetaTeleopKitCallback: forwardHasBetaTeleopKit
-// })
+export const robot = new Robot(
+    // jointStateCallback: forwardJointStates,
+    // batteryStateCallback: forwardBatteryState,
+    // occupancyGridCallback: forwardOccupancyGrid,
+    // moveBaseResultCallback: forwardMoveBaseState,
+    // amclPoseCallback: forwardAMCLPose,
+    // isRunStoppedCallback: forwardIsRunStopped,
+    // hasBetaTeleopKitCallback: forwardHasBetaTeleopKit
+)
 
 export let connection: WebRTCConnection;
 // export let navigationStream = new VideoStream(navigationProps);
@@ -34,9 +27,7 @@ connection = new WebRTCConnection({
     onConnectionEnd: disconnectFromRobot
 })
 
-connection.joinRobotRoom()
-
-// robot.connect().then(() => {
+robot.connect().then(() => {
     // robot.subscribeToVideo({
     //     topicName: "/navigation_camera/image_raw/rotated/compressed",
     //     callback: navigationStream.updateImage
@@ -58,8 +49,8 @@ connection.joinRobotRoom()
     // robot.getOccupancyGrid()
     // robot.getJointLimits()
     
-    // connection.joinRobotRoom()
-// })
+    connection.joinRobotRoom()
+})
 
 function handleSessionStart() {
     // connection.removeTracks()
@@ -84,7 +75,7 @@ function sendPing(msg: string) {
     connection.sendData({type: "ping", message: msg});
 }
 
-setInterval(sendPing, 1000, "hello, operator");
+// setInterval(sendPing, 1000, "hello, operator");
 
 // function forwardMoveBaseState(state: MoveBaseState) {
 //     if (!connection) throw 'WebRTC connection undefined!'
