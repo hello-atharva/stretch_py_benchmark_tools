@@ -3,14 +3,16 @@ NodeJS server for stretch_web_teleop
 
 ## Installation
 
-This repository assumes that you have an up-to-date `ament_ws` installed by `stretch_install`
-
-Set up the workspace
+Set up the repos:
 
 ```
-cd ~
-mkdir -p teleop_ws/src && cd teleop_ws/src
+mkdir web_teleop && cd web_teleop
 git clone git@github.com:hello-atharva/stretch_py_benchmark_tools.git
+git checkout node-server
+git clone git@github.com:hello-robot/stretch_web_teleop.git
+git checkout exps
+git clone git@github.com:hello-robot/stretchpy.git
+git checkout exps
 ```
 
 Install Node dependencies
@@ -22,11 +24,18 @@ npm i -D ts-node
 npm i
 ```
 
+Copy in certificates from `ament_ws`.
+
+```
+cp ~/ament_ws/src/stretch_web_teleop/certificates/* ./stretch_web_teleop/certificates/
+cp ~/ament_ws/src/stretch_web_teleop/.env ./stretch_web_teleop/.env
+```
+
 ## Running Stretch Web Teleop Interface
 
-In a new terminal, compile web teleop frontend
+In a new terminal, compile web teleop frontend (recompile whenever needed)
 ```
-cd ~/ament_ws/src/stretch_web_teleop
+cd web_teleop/stretch_web_teleop
 npm --name="stretch_web_teleop" -- run localstorage
 ```
 
@@ -39,9 +48,16 @@ export NODE_EXTRA_CA_CERTS="/home/hello-robot/ament_ws/src/stretch_web_teleop/ce
 node server.js
 ```
 
+Next, run the Python server
+
+```
+cd web_teleop/stretchpy
+python send_stretch_body.py
+```
+
 In a new terminal, run the NodeJS server
 ```
-cd ~/teleop_ws/src/stretch_py_benchmark_tools/node
+cd web_teleop/stretch_py_benchmark_tools/node
 export NODE_EXTRA_CA_CERTS="/home/hello-robot/ament_ws/src/stretch_web_teleop/certificates/rootCA.pem"
 npx ts-node node_server.ts
 ```
