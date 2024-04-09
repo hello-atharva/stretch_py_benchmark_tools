@@ -99,7 +99,7 @@ class StretchBodyZMQCLient():
                 elif cmd['type'] == "moveTo":
                     pass
                 elif cmd['type'] == "home":
-                    pass
+                    self.robot.home()
                 elif cmd['type'] == "runstop":
                     pass
                 else:
