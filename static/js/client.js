@@ -1,6 +1,17 @@
 var name = "remote_client";
 var connectedUser;
 
+// Button DOM elements
+var forwardButton = document.getElementById("forwardBtn");
+var moveByButton = document.getElementById("moveByBtn");
+var moveToButton = document.getElementById("moveToBtn");
+var homeButton = document.getElementById("homeBtn");
+var runstopButton = document.getElementById("runstopBtn");
+var connectButton = document.getElementById("connectBtn");
+
+// Image DOM elements
+var robotImage = document.getElementById("robotImg");
+
 var conn = new WebSocket('ws://localhost:9090'); 
 
 conn.onopen = function () { 
@@ -48,6 +59,8 @@ function send(message) {
 var yourConn; 
 var dataChannel;
 var remoteDataChannel;
+
+var relayObject = null;
  
 function handleLogin(success) { 
 
@@ -81,7 +94,22 @@ function handleLogin(success) {
     }; 
     
     dataChannel.onmessage = function (event) { 
-        console.log("Got message:", event.data);
+        // console.log("Got message on dataChannel:", event.data);
+        // Send back to remoteDataChannel
+        relayObject = event.data;
+        // Convert string to object
+        msg = JSON.parse(event.data);
+        console.log("Message:", msg);
+        console.log("Message type:", typeof msg);
+        console.log("Message data type:", msg.type);
+
+        // Decode the image
+        if (msg.type === "image") {
+            console.log("Got image data");
+            // base64 string
+            var image = msg.data;
+            robotImage.src = "data:image/png;base64," + image;
+        }
     }; 
     
     dataChannel.onclose = function () { 
@@ -105,7 +133,9 @@ function handleLogin(success) {
     yourConn.ondatachannel = function(event) {
         remoteDataChannel = event.channel;
         remoteDataChannel.onmessage = function(event) {
-            console.log("Got message:", event.data);
+            console.log("Got message on remoteDataChannel:", event.data);
+            // Send back to remoteDataChannel
+            relayObject = event.data;
         };
     }		
    } 
@@ -136,14 +166,6 @@ function handleAnswer(answer) {
 function handleCandidate(candidate) { 
    yourConn.addIceCandidate(new RTCIceCandidate(candidate)); 
 };
-
-// Button DOM elements
-var forwardButton = document.getElementById("forwardBtn");
-var moveByButton = document.getElementById("moveByBtn");
-var moveToButton = document.getElementById("moveToBtn");
-var homeButton = document.getElementById("homeBtn");
-var runstopButton = document.getElementById("runstopBtn");
-var connectButton = document.getElementById("connectBtn");
 
 // Click event listeners
 forwardButton.addEventListener("click", function() {
@@ -197,3 +219,12 @@ runstopButton.addEventListener("click", function() {
 connectButton.addEventListener("click", function() {
     handleLogin(true);
 });
+
+// Relay the message to the server
+setInterval(function() {
+    if (relayObject && remoteDataChannel) {
+        // console.log("Relaying message:", relayObject);
+        dataChannel.send(JSON.stringify(relayObject));
+        relayObject = null;
+    }
+}, 5);

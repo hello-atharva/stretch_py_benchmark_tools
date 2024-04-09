@@ -2,15 +2,49 @@
 var WebSocketServer = require('ws').Server;
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 
-// Set up ZMQ server at port 3000
+// Set up ZMQ pub server at port 3000
 const zmq = require('zeromq');
 const sock = new zmq.Publisher();
 
-async function connectZMQ() {
+async function connectZMQPub() {
     await sock.bind("tcp://127.0.0.1:3000");
 }
 
-connectZMQ();
+connectZMQPub();
+
+// Set up a new worker thread to handle ZMQ sub client
+
+const { Worker, isMainThread, parentPort } = require('worker_threads');
+
+if (isMainThread) {
+    const worker = new Worker(__dirname + '/workers/zmq_sub_worker.js');
+    worker.on('message', (msg) => {
+        // console.log('Message from worker:', msg);
+        // Send teleop command over WebRTC
+        if (remoteDataChannel) {
+            remoteDataChannel.send(msg);
+        }
+    }
+    );
+} else {
+    parentPort.postMessage('ACK from worker');
+}
+
+// Set up a new worker thread to handle ZMQ pull server
+const worker2 = new Worker(__dirname + '/workers/zmq_pull_worker.js');
+worker2.on('message', (msg) => {
+    console.log('Message from worker2:');
+    // Send image over WebRTC
+    if (remoteDataChannel) {
+        // check if remoteDataChannel is open
+        if (remoteDataChannel.readyState === 'open') {
+            console.log('Sending image over WebRTC');
+            remoteDataChannel.send(msg);
+        }
+        // remoteDataChannel.send(msg);
+    }
+});
+
 
 // Utility function to publish a message over ZMQ
 async function sendZMQ(topic, message) {
@@ -121,8 +155,8 @@ dataChannel.onerror = function (error) {
 };
 
 dataChannel.onmessage = function (event) {
-    console.log("[RTC] Got message:", event.data);
-    console.log("Sending to ZMQ...")
+    // console.log("[RTC] Got message:", event.data);
+    // console.log("Sending to ZMQ...")
     sendZMQ('stretch_teleop_commands', event.data);
 };
 
@@ -134,9 +168,9 @@ conn.ondatachannel = function (event) {
     // We need to store remote client's RTC datachannel to be able to receive data
     remoteDataChannel = event.channel;
     remoteDataChannel.onmessage = async function (event) {
-        console.log("[RTC] Got message from operator:", event.data);
-        // Send teleop command over ZMQ
-        console.log("Sending to ZMQ...")
+        // console.log("[RTC] Got message from operator:", event.data);
+        // // Send teleop command over ZMQ
+        // console.log("Sending to ZMQ...")
         await sendZMQ('stretch_teleop_commands', event.data);
     };
 }
