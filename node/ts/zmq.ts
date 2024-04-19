@@ -1,12 +1,12 @@
 // TODOs:
 //  1. Add support for jointStateCallback, batteryStateCallback, occupancyGridCallback, moveBaseResultCallback, amclPoseCallback, isRunStoppedCallback, hasBetaTeleopKitCallback
 
-const zmq = require('zeromq');
+import { Socket } from 'zeromq';
 import { RobotPose, ValidJointStateDict } from './util';
 
 
 export class Robot {
-    private socket
+    private socket: zmq.Socket
     // private jointStateCallback: (robotPose: RobotPose, jointValues: ValidJointStateDict, effortValues: ValidJointStateDict) => void
     // private batteryStateCallback: (batteryState: ROSBatteryState) => void
     // private occupancyGridCallback: (occupancyGrid: ROSOccupancyGrid) => void
@@ -35,6 +35,10 @@ export class Robot {
 
     async connect(): Promise<void> {
         this.socket = new zmq.Pair();
+        let context = new zmq.Context();
+        context.socket(zmq.PAIR);
+
+
         await this.socket.connect("tcp://127.0.0.1:3000");
         this.socket.send("hello");
         await this.socket.receive();

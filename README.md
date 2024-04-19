@@ -64,3 +64,4 @@ npx ts-node node_server.ts
 
 Open up a browser, preferably Chrome, and go to [https://localhost/operator](https://localhost/operator)
 
+If you ever see the operator screen go white (and errors in the console), go to console and enter `localStorage.clear()`
