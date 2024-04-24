@@ -18,8 +18,8 @@ class StretchSlam():
     def initialize(self):
         self.slam.initialize()
         self.video_capture = cv2.VideoCapture(6)
-        # self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        # self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     def run(self):
         if not self.slam.is_running() or self.video_capture is None:
