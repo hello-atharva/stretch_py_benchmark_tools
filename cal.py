@@ -1,3 +1,5 @@
+# Use getImages.py to capture frames
+
 import cv2
 # assert cv2.__version__[0] == '3', 'The fisheye module requires opencv version >= 3.0.0'
 import numpy as np
